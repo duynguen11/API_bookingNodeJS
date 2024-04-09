@@ -25,7 +25,7 @@ exports.updateChuDe = (req, res) => {
   const chudeReq = new chudeModel(req.body);
   chudeModel.updateChuDeId(req.params.id, chudeReq, (err, data) => {
     if (err) res.send(err);
-    console.log("DATA: ", data);
+    console.log("Dữ liệu cập nhật: ", chudeReq);
     res.json({ status: true, message: "Updated ok!" });
   });
 };
