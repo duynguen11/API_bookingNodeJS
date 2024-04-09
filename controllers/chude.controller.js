@@ -16,7 +16,7 @@ exports.createChuDe = (req, res) => {
   const chudeReq = new chudeModel(req.body);
   chudeModel.createNewChuDe(chudeReq, (err, data) => {
     if (err) res.send(err);
-    console.log("DATA: ", data);
+    console.log("Đã thêm mới chủ đề: ", chudeReq);
     res.json({ status: true, message: "Created ok!" });
   });
 };
