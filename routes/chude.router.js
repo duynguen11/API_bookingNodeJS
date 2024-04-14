@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const checkAuth = require("../middleware/checkAuth");
 var dbConnect = require("../config/db.config");
 
 const chudeController = require("../controllers/chude.controller");
@@ -16,7 +17,11 @@ router.get("/:id", (req, res) => {
 router.post("/create", chudeController.createChuDe);
 router.put("/update/:id", chudeController.updateChuDe);
 
-router.delete("/delete/:MaChuDe", (req, res) => {
+router.delete("/delete/:MaChuDe", checkAuth, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Chỉ có quản trị viên mới được phép truy cập vào route này' });
+  }
+
   const MaChuDe = req.params.MaChuDe;
   const checkQuery = "SELECT COUNT(*) AS tourCount FROM tour WHERE MaChuDe = ?";
 

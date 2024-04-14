@@ -2,9 +2,8 @@ const express = require("express");
 const router = express.Router();
 const tourController = require("../controllers/tour.controller");
 const dbConnect = require("../config/db.config");
-const moment = require("moment");
 const multer = require("multer");
-const path = require("path");
+const checkAuth = require("../middleware/checkAuth");
 
 // Cấu hình multer
 const storage = multer.diskStorage({
@@ -33,7 +32,7 @@ router.get("/", tourController.getTour);
 router.get("/:id", tourController.getOneTour);
 router.post("/create", tourController.createTour);
 router.put("/update/:id", tourController.updateTour);
-router.delete("/delete/:id", tourController.deleteTour);
+router.delete("/delete/:id", checkAuth, tourController.deleteTour);
 
 router.get("/imageExtras/:MaTour", (req, res) => {
   const MaTour = req.params.MaTour;
@@ -54,7 +53,7 @@ router.get("/imageExtras/:MaTour", (req, res) => {
   });
 });
 
-router.get('/booking-tour/:MaTour', (req, res) => {
+router.get("/booking-tour/:MaTour", (req, res) => {
   const MaTour = req.params.MaTour;
   const sql = `SELECT *, 
     hinhanhtour.URL,
@@ -65,20 +64,24 @@ router.get('/booking-tour/:MaTour', (req, res) => {
     JOIN chude ON tour.MaChuDe = chude.MaChuDe
     JOIN chitiettour ON tour.MaTour = chitiettour.MaTour
     JOIN taikhoan ON chitiettour.MaTaikhoan = taikhoan.MaTaikhoan
-    WHERE tour.MaTour = ? `
-  
+    WHERE tour.MaTour = ? `;
+
   dbConnect.query(sql, [MaTour], (err, result) => {
     if (err) {
       console.error("Lỗi khi thực hiện truy vấn:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy thông tin tour và tài khoản.");
+      res
+        .status(500)
+        .send("Đã xảy ra lỗi khi lấy thông tin tour và tài khoản.");
     } else {
       res.json(result);
     }
-  });  
-
+  });
 });
 
-router.post("/uploadCateImage/:MaTour", uploadSingle.single("image"), (req, res) => {
+router.post(
+  "/uploadCateImage/:MaTour",
+  uploadSingle.single("image"),
+  (req, res) => {
     const MaTour = req.params.MaTour;
     const URL = "/uploads/" + req.file.filename;
     try {

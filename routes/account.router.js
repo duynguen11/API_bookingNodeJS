@@ -4,7 +4,8 @@ var dbConnect = require("../config/db.config");
 const { LocalStorage } = require("node-localstorage");
 const localStorage = new LocalStorage("./scratch");
 const multer = require("multer");
-const path = require("path");
+const jwt = require("jsonwebtoken");
+const checkAuth = require("../middleware/checkAuth");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -103,10 +104,20 @@ router.post("/login", (req, res) => {
       } else if (user.PhanLoaiTK === "nhanvien") {
         role = "nhanvien";
       }
-      // Trả về thông tin người dùng và quyền truy cập
-      return res
-        .status(200)
-        .json({ message: "Đăng nhập thành công !", user, role });
+      // Tạo một token
+      const token = jwt.sign(
+        { userId: user.MaTaikhoan, userName: user.TaiKhoan, role },
+        "your_secret_key"
+      );
+      // Gửi thông tin người dùng, token và ID về cho client
+      localStorage.setItem("token", token);
+      // Gửi thông tin người dùng, token và ID về cho client
+      return res.status(200).json({
+        message: "Đăng nhập thành công !",
+        user,
+        token,
+        userId: user.MaTaikhoan,
+      });
     } else {
       // Trả về lỗi nếu đăng nhập không thành công
       return res
@@ -114,6 +125,24 @@ router.post("/login", (req, res) => {
         .json({ error: "Tên người dùng hoặc mật khẩu không chính xác" });
     }
   });
+});
+
+router.post("/user/logout", (req, res) => {
+  // Phương thức này sẽ xử lý đăng xuất người dùng
+  // Ví dụ: nếu bạn đang sử dụng session, bạn có thể hủy nó ở đây
+  // req.session.destroy((err) => {
+  //   if (err) {
+  //     console.error("Error logging out:", err);
+  //     return res
+  //       .status(500)
+  //       .json({ success: false, message: "Error logging out" });
+  //   }
+  //   res.clearCookie("sessionID"); // Xóa cookie session nếu sử dụng cookie-session middleware
+  //   res.json({ success: true, message: "Logout successful" });
+  // });
+
+  // Trong ví dụ này, chỉ trả về phản hồi thành công mà không xóa session hoặc cookie
+  res.json({ success: true, message: "Logout successful" });
 });
 
 router.post("/user/login", (req, res) => {
@@ -147,12 +176,10 @@ router.post("/user/login", (req, res) => {
       }
     } else {
       // Không tìm thấy tài khoản hoặc mật khẩu không đúng
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Tài khoản hoặc mật khẩu không đúng",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "Tài khoản hoặc mật khẩu không đúng",
+      });
     }
   });
 });
@@ -184,7 +211,10 @@ router.post("/messbox", (req, res) => {
   });
 });
 
-router.get("/employees", (req, res) => {
+router.get("/employees", checkAuth, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Chỉ có quản trị viên mới được phép truy cập vào route này' });
+  }
   // Truy vấn để lấy tất cả nhân viên có PhanLoaiTK = 'nhanvien' (chuỗi 'nhanvien' trong dấu nháy đơn)
   dbConnect.query(
     "SELECT * FROM taikhoan WHERE PhanLoaiTK = 'nhanvien'",
@@ -211,26 +241,30 @@ router.get("/users", (req, res) => {
   );
 });
 
-router.get("/info-khachhang/:id", (req, res) => {
+router.get("/info-khachhang/:id", checkAuth, (req, res) => {
   const id = req.params.id;
   const query = "SELECT * FROM taikhoan WHERE MaTaikhoan = ?";
+  
   dbConnect.query(query, [id], (err, results) => {
     if (err) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Internal Server Error" });
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
+    
     if (results.length > 0) {
       const userInfo = results[0];
+      
+      // Nếu người dùng không phải là admin, ẩn mật khẩu
+      if (req.user.role !== 'admin') {
+        delete userInfo.MatKhau;
+      }
+
       return res.status(200).json({
         success: true,
         message: "User information retrieved",
         userInfo,
       });
     } else {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
   });
 });
@@ -396,24 +430,6 @@ router.put("/update/user-info", (req, res) => {
         .json({ success: true, message: "User info updated successfully" });
     }
   );
-});
-
-router.post("/user/logout", (req, res) => {
-  // Phương thức này sẽ xử lý đăng xuất người dùng
-  // Ví dụ: nếu bạn đang sử dụng session, bạn có thể hủy nó ở đây
-  // req.session.destroy((err) => {
-  //   if (err) {
-  //     console.error("Error logging out:", err);
-  //     return res
-  //       .status(500)
-  //       .json({ success: false, message: "Error logging out" });
-  //   }
-  //   res.clearCookie("sessionID"); // Xóa cookie session nếu sử dụng cookie-session middleware
-  //   res.json({ success: true, message: "Logout successful" });
-  // });
-
-  // Trong ví dụ này, chỉ trả về phản hồi thành công mà không xóa session hoặc cookie
-  res.json({ success: true, message: "Logout successful" });
 });
 
 router.delete("/lockAccount/:id", (req, res) => {

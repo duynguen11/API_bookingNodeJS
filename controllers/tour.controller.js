@@ -1,5 +1,5 @@
 const tourModel = require("../models/tour.model");
-
+const jwt = require('jsonwebtoken');
 const moment = require("moment");
 
 exports.getTour = (req, res) => {
@@ -48,6 +48,12 @@ exports.updateTour = (req, res) => {
 };
 
 exports.deleteTour = (req, res) => {
+  console.log('Token đã controller giải mã:', req.user);
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Chỉ có quản trị viên mới được phép truy cập vào route này' });
+  }
+
   tourModel.deleteTourId(req.params.id, (err, data) => {
     if (err) res.send(err);
     res.json({ status: true, message: "Delete ok!" });

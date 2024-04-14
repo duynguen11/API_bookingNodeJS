@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 var dbConnect = require("../config/db.config");
 const multer = require("multer");
-const path = require("path");
 
 const imgconfig = multer.diskStorage({
   destination: (req, file, callback) => {
