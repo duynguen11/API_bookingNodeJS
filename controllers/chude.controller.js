@@ -16,7 +16,6 @@ exports.createChuDe = (req, res) => {
   const chudeReq = new chudeModel(req.body);
   chudeModel.createNewChuDe(chudeReq, (err, data) => {
     if (err) res.send(err);
-    console.log("Đã thêm mới chủ đề: ", chudeReq);
     res.json({ status: true, message: "Created ok!" });
   });
 };
@@ -25,7 +24,6 @@ exports.updateChuDe = (req, res) => {
   const chudeReq = new chudeModel(req.body);
   chudeModel.updateChuDeId(req.params.id, chudeReq, (err, data) => {
     if (err) res.send(err);
-    console.log("Dữ liệu cập nhật: ", chudeReq);
     res.json({ status: true, message: "Updated ok!" });
   });
 };

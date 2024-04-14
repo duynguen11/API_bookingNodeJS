@@ -4,20 +4,20 @@ var dbConnect = require("../config/db.config");
 const multer = require("multer");
 const path = require("path");
 
-var imgconfig = multer.diskStorage({
+const imgconfig = multer.diskStorage({
   destination: (req, file, callback) => {
     callback(null, "public/uploads");
   },
   filename: (req, file, callback) => {
-    callback(null, `image_${Date.now()}.${file.originalname}`);
+    callback(null, file.originalname);
   },
 });
 
-var upload = multer({
+const upload = multer({
   storage: imgconfig,
 });
 
-router.post("/addtour", upload.array("HinhAnh"), (req, res) => {
+router.post("/addtour", upload.single("HinhAnh"), (req, res) => {
   const {
     TenTour,
     GiaTour,
@@ -31,7 +31,7 @@ router.post("/addtour", upload.array("HinhAnh"), (req, res) => {
     MoTa,
   } = req.body;
 
-  const HinhAnh = req.files;
+  const HinhAnh = req.file; // Sử dụng req.file thay vì req.files
   const sqlInsertTour =
     "INSERT INTO tour (TenTour, GiaTour, ThoiGian, NgayKhoiHanh, NoiKhoiHanh, SoCho, PhuongTien, DiemDen, MaChuDe, MoTa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   dbConnect.query(
@@ -55,18 +55,15 @@ router.post("/addtour", upload.array("HinhAnh"), (req, res) => {
         return;
       }
       const tourId = result.insertId;
-      if (HinhAnh && HinhAnh.length > 0) {
-        HinhAnh.forEach((file) => {
-          let url = file.path; // Đường dẫn tới file đã lưu trữ
-          url = url.replace(/^public\\/, ""); // Loại bỏ 'public\\' từ đầu chuỗi
-          const sqlInsertImage =
-            "INSERT INTO hinhanhtour (Url, MaTour, PhanLoaiAnh) VALUES (?, ?, 1)";
-          dbConnect.query(sqlInsertImage, [url, tourId], (err, result) => {
-            if (err) {
-              console.error("Error adding image:", err);
-              return;
-            }
-          });
+      if (HinhAnh) { // Kiểm tra xem tệp đã được tải lên chưa
+        const imagePath = "/uploads/" + HinhAnh.filename;
+        const sqlInsertImage =
+          "INSERT INTO hinhanhtour (Url, MaTour, PhanLoaiAnh) VALUES (?, ?, 1)";
+        dbConnect.query(sqlInsertImage, [imagePath, tourId], (err, result) => {
+          if (err) {
+            console.error("Error adding image:", err);
+            return;
+          }
         });
       }
 

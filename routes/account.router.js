@@ -11,9 +11,7 @@ const storage = multer.diskStorage({
     cb(null, "public/avatars");
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const extension = path.extname(file.originalname);
-    cb(null, uniqueSuffix + extension);
+    cb(null, file.originalname);
   },
 });
 
@@ -49,7 +47,6 @@ router.post("/register", (req, res) => {
           res.status(500).send("Error registering user");
           return;
         }
-        console.log("User registered successfully");
         res.status(200).send("User registered successfully");
       }
     );
@@ -152,14 +149,17 @@ router.post("/user/login", (req, res) => {
       // Không tìm thấy tài khoản hoặc mật khẩu không đúng
       return res
         .status(401)
-        .json({ success: false, message: "Tài khoản hoặc mật khẩu không đúng" });
+        .json({
+          success: false,
+          message: "Tài khoản hoặc mật khẩu không đúng",
+        });
     }
   });
 });
 
 router.post("/messbox", (req, res) => {
   const { hoten, email, tinnhan, lienhe, MaTaikhoan } = req.body;
-  
+
   const trangthai = "đợi phản hồi";
   // Lấy thời gian hiện tại
   const thoigiangui = new Date().toISOString().slice(0, 19).replace("T", " "); // Lấy thời gian ở định dạng 'YYYY-MM-DD HH:MM:SS'
@@ -280,12 +280,10 @@ router.post("/khachhang/update-password", (req, res) => {
     }
     if (result.affectedRows === 0) {
       // Không có hàng nào được ảnh hưởng, có thể không có tài khoản với mã tài khoản đã cung cấp
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Không tìm thấy tài khoản với mã tài khoản đã cung cấp",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy tài khoản với mã tài khoản đã cung cấp",
+      });
     }
     // Cập nhật mật khẩu thành công
     return res
@@ -344,7 +342,7 @@ router.get("/user-info/:userId", (req, res) => {
 
 router.post("/user/:userId/avatar", upload.single("image"), (req, res) => {
   const userId = req.params.userId;
-  const avatarUrl = req.file ? req.file.filename : null;
+  const avatarUrl = req.file ? "/avatars/" + req.file.filename : null;
 
   try {
     // Kiểm tra xem file ảnh đã được gửi thành công chưa
@@ -352,6 +350,7 @@ router.post("/user/:userId/avatar", upload.single("image"), (req, res) => {
       return res.status(400).json({ error: "Không tìm thấy tệp ảnh" });
     }
 
+    console.log("Đường dẫn của ảnh đã tải lên:", avatarUrl);
     // Cập nhật cột avatar_url trong bảng taikhoan
     const sql = `UPDATE taikhoan SET Avatar_URL = ? WHERE MaTaikhoan = ?`;
     dbConnect.query(sql, [avatarUrl, userId], (error, results) => {
@@ -364,7 +363,6 @@ router.post("/user/:userId/avatar", upload.single("image"), (req, res) => {
         .json({ message: "Ảnh đã được tải lên và cập nhật thành công" });
     });
   } catch (error) {
-    console.error("Lỗi khi cập nhật ảnh đại diện:", error);
     res.status(500).json({ error: "Đã xảy ra lỗi khi xử lý yêu cầu" });
   }
 });
@@ -393,7 +391,6 @@ router.put("/update/user-info", (req, res) => {
           .status(500)
           .json({ success: false, message: "Internal Server Error" });
       }
-      console.log("User info updated successfully");
       res
         .status(200)
         .json({ success: true, message: "User info updated successfully" });
