@@ -80,10 +80,6 @@ router.post("/add-account", (req, res) => {
 
 router.post("/login", (req, res) => {
   const { TaiKhoan, MatKhau } = req.body;
-  // Xác thực input
-  if (!TaiKhoan || !MatKhau) {
-    return res.status(400).json({ error: "Vui lòng điền đầy đủ thông tin" });
-  }
   // Thực hiện truy vấn để kiểm tra đăng nhập
   const sql = "SELECT * FROM taikhoan WHERE TaiKhoan = ? AND MatKhau = ?";
   dbConnect.query(sql, [TaiKhoan, MatKhau], (err, results) => {
@@ -212,8 +208,10 @@ router.post("/messbox", (req, res) => {
 });
 
 router.get("/employees", checkAuth, (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Chỉ có quản trị viên mới được phép truy cập vào route này' });
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      error: "Chỉ có quản trị viên mới được phép truy cập vào route này",
+    });
   }
   // Truy vấn để lấy tất cả nhân viên có PhanLoaiTK = 'nhanvien' (chuỗi 'nhanvien' trong dấu nháy đơn)
   dbConnect.query(
@@ -244,17 +242,19 @@ router.get("/users", (req, res) => {
 router.get("/info-khachhang/:id", checkAuth, (req, res) => {
   const id = req.params.id;
   const query = "SELECT * FROM taikhoan WHERE MaTaikhoan = ?";
-  
+
   dbConnect.query(query, [id], (err, results) => {
     if (err) {
-      return res.status(500).json({ success: false, message: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
     }
-    
+
     if (results.length > 0) {
       const userInfo = results[0];
-      
+
       // Nếu người dùng không phải là admin, ẩn mật khẩu
-      if (req.user.role !== 'admin') {
+      if (req.user.role !== "admin") {
         delete userInfo.MatKhau;
       }
 
@@ -264,7 +264,9 @@ router.get("/info-khachhang/:id", checkAuth, (req, res) => {
         userInfo,
       });
     } else {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
   });
 });
@@ -432,20 +434,25 @@ router.put("/update/user-info", (req, res) => {
   );
 });
 
-router.delete("/lockAccount/:id", (req, res) => {
+router.delete("/lockAccount/:id", checkAuth, (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      error: "Chỉ có quản trị viên mới được phép truy cập vào route này",
+    });
+  }
+
   const userId = req.params.id;
-  // Thực hiện truy vấn xóa dữ liệu từ cơ sở dữ liệu
   const sql = "DELETE FROM taikhoan WHERE MaTaikhoan = ?";
+  
   dbConnect.query(sql, [userId], (err, result) => {
     if (err) {
       console.error("Error deleting user: " + err.stack);
-      res.status(500).send("Error deleting user");
+      res.status(500).json("Error deleting user");
       return;
     }
-    console.log("Deleted account with ID " + userId);
     res
       .status(200)
-      .send({ status: true, message: "Lock account successfully" });
+      .json({ status: true, message: "Lock account successfully" });
   });
 });
 
