@@ -226,6 +226,20 @@ router.get("/employees", checkAuth, (req, res) => {
   );
 });
 
+router.get("/client/employees", (req, res) => {
+  // Truy vấn để lấy tất cả nhân viên có PhanLoaiTK = 'nhanvien' (chuỗi 'nhanvien' trong dấu nháy đơn)
+  dbConnect.query(
+    "SELECT * FROM taikhoan WHERE PhanLoaiTK = 'nhanvien'",
+    function (error, results) {
+      if (error) {
+        res.status(500).json({ error: "Lỗi truy vấn cơ sở dữ liệu" });
+      } else {
+        res.json(results); // Trả về kết quả dưới dạng JSON
+      }
+    }
+  );
+});
+
 router.get("/users", (req, res) => {
   dbConnect.query(
     "SELECT * FROM taikhoan WHERE PhanLoaiTK = 'thành viên'",
