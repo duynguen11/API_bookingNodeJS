@@ -78,6 +78,33 @@ router.get("/booking-tour/:MaTour", (req, res) => {
   });
 });
 
+router.get("/tour-confirm/:MaTour", (req, res) => {
+  const MaTour = req.params.MaTour;
+  const sql = `SELECT tour.*,
+    hinhanhtour.URL,
+    chude.TenChuDe,
+    chitiettour.TTCT_ngaydi,
+    chitiettour.TTCT_taptrung,
+    chitiettour.TTCT_ngayve,
+    chitiettour.TTCT_diemden
+    FROM tour
+    JOIN hinhanhtour ON tour.MaTour = hinhanhtour.MaTour AND hinhanhtour.PhanLoaiAnh = 1
+    JOIN chude ON tour.MaChuDe = chude.MaChuDe
+    JOIN chitiettour ON tour.MaTour = chitiettour.MaTour
+    WHERE tour.MaTour = ? `;
+
+  dbConnect.query(sql, [MaTour], (err, result) => {
+    if (err) {
+      console.error("Lỗi khi thực hiện truy vấn:", err);
+      res
+        .status(500)
+        .send("Đã xảy ra lỗi khi lấy thông tin tour và tài khoản.");
+    } else {
+      res.json(result);
+    }
+  });
+});
+
 router.post(
   "/uploadCateImage/:MaTour",
   uploadSingle.single("image"),
