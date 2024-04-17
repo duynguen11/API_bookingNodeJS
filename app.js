@@ -9,6 +9,7 @@ const tourRouter = require("./routes/tour.router");
 const testTourRouter = require("./routes/test_tour.router");
 const ctgtRouter = require("./routes/chitietgiatour.router");
 const hopthuRouter = require("./routes/hopthu.router");
+const chitietdattoutRouter = require("./routes/chitietdattour");
 dotenv.config();
 
 app.use(cors({ origin: true, credentials: true }));
@@ -26,6 +27,7 @@ app.use("/api/tour", tourRouter);
 app.use("/api/test_tour", testTourRouter);
 app.use("/api/chitietgiatour", ctgtRouter);
 app.use("/api/hopthu", hopthuRouter);
+app.use("/api/chitietdattour", chitietdattoutRouter);
 
 app.listen(process.env.PORT || 1011, () => {
   console.log(`API running on PORT(${process.env.PORT})...`);
