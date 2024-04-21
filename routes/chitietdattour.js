@@ -2,6 +2,20 @@ const express = require("express");
 const router = express.Router();
 var dbConnect = require("../config/db.config");
 
+router.post("/historyBooking", (req, res) => {
+  const MaTaikhoan_KH = req.body.MaTaikhoan_KH; // Lấy giá trị MaTaikhoan_KH từ body
+  const sql = ` SELECT chitietdattour.*, hinhanhtour.URL
+    FROM chitietdattour
+    JOIN hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
+    WHERE chitietdattour.MaTaikhoan_KH = 7 AND hinhanhtour.PhanLoaiAnh = 1 `;
+
+  dbConnect.query(sql, [MaTaikhoan_KH], (err, data) => {
+    // Truyền MaTaikhoan_KH vào trong mảng tham số
+    if (err) return res.json({ Status: false, Error: "Query error" + err });
+    return res.status(200).json(data);
+  });
+});
+
 router.post("/submitBooking", (req, res) => {
   try {
     const data = req.body;
@@ -108,6 +122,22 @@ router.post("/submitBooking", (req, res) => {
     console.error("Error handling request:", error);
     res.status(400).json({ message: "Bad Request" });
   }
+});
+
+router.get("/allSubmitBooking", (req, res) => {
+  const sql = "SELECT * FROM chitietdattour";
+
+  dbConnect.query(sql, (err, data) => {
+    if (err) {
+      console.error("Lỗi khi lấy data tourbooking", err);
+      return res
+        .status(500)
+        .json({ message: "Có lỗi khi lấy dữ liệu tourbooking" });
+    }
+
+    console.log("Dữ liệu tourBooking:", data);
+    res.status(200).json(data);
+  });
 });
 
 module.exports = router;

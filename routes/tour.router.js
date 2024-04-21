@@ -236,12 +236,12 @@ router.get("/chitiettour/:matour", (req, res) => {
 });
 
 router.get("/category/tour_uudai", (req, res) => {
-  const queryString = `
-        SELECT tour.*, hinhanhtour.URL, chude.TenChuDe 
-        FROM tour 
-        LEFT JOIN hinhanhtour ON tour.MaTour = hinhanhtour.MaTour
-        LEFT JOIN chude ON tour.MaChuDe = chude.MaChuDe 
-        WHERE tour.MaChuDe = 3`;
+  const queryString = 
+    `SELECT tour.*, hinhanhtour.URL, chude.TenChuDe 
+    FROM tour 
+    LEFT JOIN hinhanhtour ON tour.MaTour = hinhanhtour.MaTour AND hinhanhtour.phanloaianh = 1
+    LEFT JOIN chude ON tour.MaChuDe = chude.MaChuDe 
+    WHERE tour.MaChuDe = 4`;
   dbConnect.query(queryString, (err, rows, fields) => {
     if (err) {
       console.log("Error retrieving tours: ", err);
