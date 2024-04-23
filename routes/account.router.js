@@ -285,6 +285,25 @@ router.get("/info-khachhang/:id", checkAuth, (req, res) => {
   });
 });
 
+router.get("/info-employee/:id", (req, res) => {
+  const id = req.params.id;
+  const query = "SELECT * FROM taikhoan WHERE MaTaikhoan = ?";
+
+  dbConnect.query(query, [id], (err, data) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User information retrieved",
+      data,
+    });
+  });
+});
+
 router.get("/info-HDV/:id", (req, res) => {
   const id = req.params.id;
   const query = "SELECT * FROM taikhoan WHERE MaTaikhoan = ?";
@@ -457,7 +476,7 @@ router.delete("/lockAccount/:id", checkAuth, (req, res) => {
 
   const userId = req.params.id;
   const sql = "DELETE FROM taikhoan WHERE MaTaikhoan = ?";
-  
+
   dbConnect.query(sql, [userId], (err, result) => {
     if (err) {
       console.error("Error deleting user: " + err.stack);

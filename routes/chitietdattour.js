@@ -3,13 +3,28 @@ const router = express.Router();
 var dbConnect = require("../config/db.config");
 
 router.post("/historyBooking", (req, res) => {
-  const MaTaikhoan_KH = req.body.MaTaikhoan_KH; // Lấy giá trị MaTaikhoan_KH từ body
+  const MaTaikhoan_KH = req.body.MaTaikhoan_KH;
   const sql = ` SELECT chitietdattour.*, hinhanhtour.URL
     FROM chitietdattour
     JOIN hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
-    WHERE chitietdattour.MaTaikhoan_KH = 7 AND hinhanhtour.PhanLoaiAnh = 1 `;
+    WHERE chitietdattour.MaTaikhoan_KH = ? AND hinhanhtour.PhanLoaiAnh = 1 `;
 
   dbConnect.query(sql, [MaTaikhoan_KH], (err, data) => {
+    // Truyền MaTaikhoan_KH vào trong mảng tham số
+    if (err) return res.json({ Status: false, Error: "Query error" + err });
+    return res.status(200).json(data);
+  });
+});
+
+router.post("/historyJoinning", (req, res) => {
+  const MaTaikhoan_HDV = req.body.MaTaikhoan_HDV;
+  const sql = ` SELECT chitietdattour.*, hinhanhtour.URL
+    FROM chitietdattour
+    JOIN hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
+    WHERE chitietdattour.MaTaikhoan_HDV = ? AND hinhanhtour.PhanLoaiAnh = 1 `;
+
+  console.log("ID HDV đã nhận", MaTaikhoan_HDV);
+  dbConnect.query(sql, [MaTaikhoan_HDV], (err, data) => {
     // Truyền MaTaikhoan_KH vào trong mảng tham số
     if (err) return res.json({ Status: false, Error: "Query error" + err });
     return res.status(200).json(data);
@@ -125,7 +140,22 @@ router.post("/submitBooking", (req, res) => {
 });
 
 router.get("/allSubmitBooking", (req, res) => {
-  const sql = "SELECT * FROM chitietdattour";
+  const sql = `SELECT 
+    chitietdattour.*, 
+    taikhoan_HDV.HoTen AS HoTen_HDV, 
+    taikhoan_KH.HoTen AS HoTen_KH, 
+    taikhoan_KH.PhanLoaiTK,
+    hinhanhtour.URL AS HinhAnhTour
+    FROM 
+      chitietdattour
+    JOIN 
+      taikhoan AS taikhoan_HDV ON chitietdattour.MaTaikhoan_HDV = taikhoan_HDV.MaTaikhoan
+    JOIN 
+      taikhoan AS taikhoan_KH ON chitietdattour.MaTaikhoan_KH = taikhoan_KH.MaTaikhoan
+    JOIN 
+      hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
+    WHERE 
+      hinhanhtour.PhanLoaiAnh = 1`;
 
   dbConnect.query(sql, (err, data) => {
     if (err) {
