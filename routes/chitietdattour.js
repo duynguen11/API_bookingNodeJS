@@ -141,21 +141,21 @@ router.post("/submitBooking", (req, res) => {
 
 router.get("/allSubmitBooking", (req, res) => {
   const sql = `SELECT 
-    chitietdattour.*, 
-    taikhoan_HDV.HoTen AS HoTen_HDV, 
-    taikhoan_KH.HoTen AS HoTen_KH, 
-    taikhoan_KH.PhanLoaiTK,
-    hinhanhtour.URL AS HinhAnhTour
-    FROM 
-      chitietdattour
-    JOIN 
-      taikhoan AS taikhoan_HDV ON chitietdattour.MaTaikhoan_HDV = taikhoan_HDV.MaTaikhoan
-    JOIN 
-      taikhoan AS taikhoan_KH ON chitietdattour.MaTaikhoan_KH = taikhoan_KH.MaTaikhoan
-    JOIN 
-      hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
-    WHERE 
-      hinhanhtour.PhanLoaiAnh = 1`;
+  chitietdattour.*, 
+  COALESCE(taikhoan_KH.HoTen, chitietdattour.HoTen) AS HoTen_KH,
+  COALESCE(taikhoan_KH.PhanLoaiTK, 'Không có') AS PhanLoaiTK,
+  taikhoan_HDV.HoTen AS HoTen_HDV, 
+  hinhanhtour.URL AS HinhAnhTour
+  FROM 
+    chitietdattour
+  LEFT JOIN 
+    taikhoan AS taikhoan_HDV ON chitietdattour.MaTaikhoan_HDV = taikhoan_HDV.MaTaikhoan
+  LEFT JOIN 
+    taikhoan AS taikhoan_KH ON chitietdattour.MaTaikhoan_KH = taikhoan_KH.MaTaikhoan
+  JOIN 
+    hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
+  WHERE 
+    hinhanhtour.PhanLoaiAnh = 1`;
 
   dbConnect.query(sql, (err, data) => {
     if (err) {
@@ -167,6 +167,28 @@ router.get("/allSubmitBooking", (req, res) => {
 
     console.log("Dữ liệu tourBooking:", data);
     res.status(200).json(data);
+  });
+});
+
+router.put("/updateBookingStatus", (req, res) => {
+  const { MaDatTour, TrangThai } = req.body;
+  // Kiểm tra xem MaDatTour và TrangThai có được gửi trong body hay không
+  if (!MaDatTour || !TrangThai) {
+    return res
+      .status(400)
+      .json({ error: "Missing MaDatTour or TrangThai in request body" });
+  }
+
+  // Mã SQL để cập nhật TrangThai dựa trên MaDatTour và TrangThai từ body của yêu cầu
+  const sql = `UPDATE chitietdattour SET TrangThai = ? WHERE MaDatTour = ?`;
+
+  // Thực hiện truy vấn SQL với MaDatTour và TrangThai
+  dbConnect.query(sql, [TrangThai, MaDatTour], (error, results) => {
+    if (error) {
+      res.status(500).json({ error: "Có lỗi xảy ra khi cập nhật TrangThai" });
+    } else {
+      res.status(200).json({ message: "Cập nhật TrangThai thành công" });
+    }
   });
 });
 

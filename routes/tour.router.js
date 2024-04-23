@@ -236,8 +236,7 @@ router.get("/chitiettour/:matour", (req, res) => {
 });
 
 router.get("/category/tour_uudai", (req, res) => {
-  const queryString = 
-    `SELECT tour.*, hinhanhtour.URL, chude.TenChuDe 
+  const queryString = `SELECT tour.*, hinhanhtour.URL, chude.TenChuDe 
     FROM tour 
     LEFT JOIN hinhanhtour ON tour.MaTour = hinhanhtour.MaTour AND hinhanhtour.phanloaianh = 1
     LEFT JOIN chude ON tour.MaChuDe = chude.MaChuDe 
@@ -407,15 +406,16 @@ router.post("/touryeuthich", (req, res) => {
 
 router.post("/ttct_tourInsert/:MaTour", async (req, res) => {
   const MaTour = req.params.MaTour;
-  const { TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden } = req.body;
+  const { TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTaikhoan } = req.body;
+  console.log('Dữ liệu TTCT thêm vào:', req.body)
 
   try {
     // Kiểm tra xem dữ liệu đã tồn tại hay chưa
     const existingData = await dbConnect
       .promise()
       .query(
-        `SELECT * FROM chitiettour WHERE MaTour = ? AND TTCT_ngaydi = ? AND TTCT_ngayve = ? AND TTCT_taptrung = ? AND TTCT_diemden = ?`,
-        [MaTour, TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden]
+        `SELECT * FROM chitiettour WHERE MaTour = ? AND TTCT_ngaydi = ? AND TTCT_ngayve = ? AND TTCT_taptrung = ? AND TTCT_diemden = ? AND MaTaikhoan = ?`,
+        [MaTour, TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTaikhoan]
       );
 
     // Nếu dữ liệu đã tồn tại, trả về mã trạng thái 409 (Conflict)
@@ -427,8 +427,8 @@ router.post("/ttct_tourInsert/:MaTour", async (req, res) => {
     await dbConnect
       .promise()
       .query(
-        `INSERT INTO chitiettour (TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTour) VALUES (?, ?, ?, ?, ?)`,
-        [TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTour]
+        `INSERT INTO chitiettour (TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTaikhoan, MaTour) VALUES (?, ?, ?, ?, ?, ?)`,
+        [TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTaikhoan, MaTour]
       );
 
     // Trả về mã trạng thái 200 (OK) và thông báo thành công
@@ -446,13 +446,15 @@ router.post("/ttct_tourInsert/:MaTour", async (req, res) => {
 
 router.put("/ttct_tourUpdate/:MaTour", (req, res) => {
   const { MaTour } = req.params;
-  const { TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden } = req.body;
+  const { TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTaikhoan } =
+    req.body;
+  console.log("Dữ liệu TTCT nhận:", req.body);
   // Truy vấn SQL để cập nhật các trường của bản ghi có MaTour tương ứng
-  const sqlQuery = `UPDATE chitiettour SET TTCT_ngaydi=?, TTCT_ngayve=?, TTCT_taptrung=?, TTCT_diemden=? WHERE MaTour=?`;
+  const sqlQuery = `UPDATE chitiettour SET TTCT_ngaydi=?, TTCT_ngayve=?, TTCT_taptrung=?, TTCT_diemden=?, MaTaikhoan =? WHERE MaTour=?`;
   // Thực hiện truy vấn
   dbConnect.query(
     sqlQuery,
-    [TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTour],
+    [TTCT_ngaydi, TTCT_ngayve, TTCT_taptrung, TTCT_diemden, MaTaikhoan, MaTour],
     (error, results, fields) => {
       if (error) {
         console.error("Error updating chi tiet tour:", error);
