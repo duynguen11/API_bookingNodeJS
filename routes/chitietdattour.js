@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const checkAuth = require("../middleware/checkAuth");
 var dbConnect = require("../config/db.config");
 
 router.post("/historyBooking", (req, res) => {
@@ -23,7 +24,6 @@ router.post("/historyJoinning", (req, res) => {
     JOIN hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
     WHERE chitietdattour.MaTaikhoan_HDV = ? AND hinhanhtour.PhanLoaiAnh = 1 `;
 
-  console.log("ID HDV đã nhận", MaTaikhoan_HDV);
   dbConnect.query(sql, [MaTaikhoan_HDV], (err, data) => {
     // Truyền MaTaikhoan_KH vào trong mảng tham số
     if (err) return res.json({ Status: false, Error: "Query error" + err });
@@ -139,7 +139,26 @@ router.post("/submitBooking", (req, res) => {
   }
 });
 
-router.get("/allSubmitBooking", (req, res) => {
+router.get("/tourrunning", (req, res) => {
+  const query = `
+  SELECT chitietdattour.*, hinhanhtour.URL 
+  FROM chitietdattour 
+  JOIN hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour 
+  WHERE chitietdattour.TrangThai = 'Tour đã được duyệt' 
+  AND hinhanhtour.PhanLoaiAnh = 1 `;
+  dbConnect.query(query, (error, results) => {
+    if (error) {
+      console.error("Lỗi khi lấy chi tiết tour:", error);
+      res
+        .status(500)
+        .json({ message: "Đã xảy ra lỗi khi lấy dữ liệu chi tiết tour." });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+router.get("/allSubmitBooking", checkAuth, (req, res) => {
   const sql = `SELECT 
   chitietdattour.*, 
   COALESCE(taikhoan_KH.HoTen, chitietdattour.HoTen) AS HoTen_KH,
@@ -156,6 +175,12 @@ router.get("/allSubmitBooking", (req, res) => {
     hinhanhtour ON chitietdattour.MaTour = hinhanhtour.MaTour
   WHERE 
     hinhanhtour.PhanLoaiAnh = 1`;
+
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      error: "Chỉ có quản trị viên mới được phép truy cập vào route này",
+    });
+  }
 
   dbConnect.query(sql, (err, data) => {
     if (err) {
